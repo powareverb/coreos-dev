@@ -1,0 +1,25 @@
+[Unit]
+Description=PowerLink Redis
+After=docker.service
+Requires=docker.service
+ 
+[Service]
+Restart=always
+RestartSec=20s
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker kill redis_powerlink
+ExecStartPre=-/usr/bin/docker rm redis_powerlink
+ExecStartPre=/usr/bin/docker pull redis
+ExecStartPre=/bin/sh -c "echo never > /sys/kernel/mm/transparent_hugepage/enabled"
+ExecStart=/usr/bin/docker run --restart=always --name redis_powerlink -p 13371:6379 redis
+ExecStartPost=/usr/bin/etcdctl set /domains/powerfarming.co.nz/%H:%i running
+ExecStop=/usr/bin/docker stop redis_powerlink
+ExecStopPost=/usr/bin/etcdctl rm /domains/powerfarming.co.nz/%H:%i
+
+[Install]
+WantedBy=multi-user.target
+
+
+[X-Fleet]
+X-Conflicts=redis_powerlink_prod.service
+#X-ConditionMachineMetadata=pfenv=prod
