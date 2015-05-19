@@ -1,0 +1,63 @@
+#cloud-config
+
+hostname: core-dev-01
+
+coreos:
+  etcd:
+    name: core-dev-01
+    discovery: https://discovery.etcd.io/c14503141248223e4d550a3c2c150032
+    addr: 10.40.1.60:4001
+    peer-addr: 10.40.1.60:7001
+  units:
+    - name: etcd.service
+      command: start
+    - name: fleet.service
+      command: start
+    - name: static.network
+      content: |
+        [Match]
+        Name=eth0
+
+        [Network]
+        Address=10.40.1.60/24
+        Gateway=10.40.1.3
+        DNS=10.40.1.3
+        DNS=8.8.8.8
+    - name: docker-redis.service
+      command: start
+      content: |
+        [Unit]
+        Description=Redis container
+        Author=Me
+        After=docker.service
+
+        [Service]
+        Restart=always
+        ExecStart=/usr/bin/docker start -a redis_server
+        ExecStop=/usr/bin/docker stop -t 2 redis_server
+    - name: cadvisor.service
+      command: start
+      content: |-
+        [Unit]
+        Description=cAdvisor Service
+        After=docker.service
+        Requires=docker.service
+      
+        [Service]
+        Restart=always
+        ExecStartPre=-/usr/bin/docker kill cadvisor
+        ExecStartPre=-/usr/bin/docker rm -f cadvisor
+        ExecStartPre=/usr/bin/docker pull google/cadvisor
+        ExecStart=/usr/bin/docker run --name cadvisor --volume=/var/run:/var/run:rw --volume=/sys:/sys:ro --volume=/var/lib/docker/:/var/lib/docker:ro --publish=4194:4194 google/cadvisor --logtostderr --port=4194
+        ExecStop=/usr/bin/docker stop -t 2 cadvisor      
+users:
+  - name: core
+    ssh-authorized-keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAIEA9qlZBWu2ajOejiiHvuWBOHn1dgG0piMyhcbRHQSD9wuvWqbKAnaPisJpKfG0HZ4pE1OvRanGXna6U2qab7EY9fyy0ZhbwEvpmI1Am8wHqU4rXNcVtjI0UbOgr0anvXEZ+SZfSt/ro7xCiLCW32atUYkl5WrTtn79L3ECXTBFY68= rsa-key-20150422
+    coreos-ssh-import-github: powareverb
+  - name: gavin
+    coreos-ssh-import-github: powareverb
+
+  - groups:
+      - sudo
+      - docker
