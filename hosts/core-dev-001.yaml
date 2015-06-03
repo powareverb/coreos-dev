@@ -1,15 +1,6 @@
 #cloud-config
 
 hostname: core-dev-01
-write_files:
-    - path: /etc/systemd/network/00-vmware.link
-      permissions: 0644
-      content: |
-        [Match]
-        Name=eno16777736
-
-        [Link]
-        Name=eth0
 coreos:
   etcd:
     name: core-dev-01
@@ -24,7 +15,7 @@ coreos:
     - name: static.network
       content: |
         [Match]
-        Name=eth0
+        Name=eno16777736
 
         [Network]
         Address=10.40.1.60/24
