@@ -4,7 +4,7 @@ hostname: core-dev-01
 coreos:
   etcd:
     name: core-dev-01
-    discovery: https://discovery.etcd.io/c14503141248223e4d550a3c2c150032
+    #discovery: https://discovery.etcd.io/c14503141248223e4d550a3c2c150032
     addr: 10.40.1.60:4001
     peer-addr: 10.40.1.60:7001
   units:
