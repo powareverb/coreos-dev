@@ -1,7 +1,15 @@
 #cloud-config
 
 hostname: core-dev-01
+write_files:
+    - path: /etc/systemd/network/00-vmware.link
+      permissions: 0644
+      content: |
+        [Match]
+        Name=eno16777736
 
+        [Link]
+        Name=eth0
 coreos:
   etcd:
     name: core-dev-01
@@ -42,14 +50,14 @@ coreos:
         Description=cAdvisor Service
         After=docker.service
         Requires=docker.service
-      
+
         [Service]
         Restart=always
         ExecStartPre=-/usr/bin/docker kill cadvisor
         ExecStartPre=-/usr/bin/docker rm -f cadvisor
         ExecStartPre=/usr/bin/docker pull google/cadvisor
         ExecStart=/usr/bin/docker run --name cadvisor --volume=/var/run:/var/run:rw --volume=/sys:/sys:ro --volume=/var/lib/docker/:/var/lib/docker:ro --publish=4194:4194 google/cadvisor --logtostderr --port=4194
-        ExecStop=/usr/bin/docker stop -t 2 cadvisor      
+        ExecStop=/usr/bin/docker stop -t 2 cadvisor
 users:
   - name: core
     ssh-authorized-keys:
